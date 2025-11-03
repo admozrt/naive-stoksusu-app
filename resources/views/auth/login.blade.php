@@ -10,7 +10,7 @@
     
     <style>
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #87CEEB 0%, #4682B4 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -27,7 +27,7 @@
         }
 
         .login-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #87CEEB 0%, #4682B4 100%);
             color: white;
             padding: 2rem;
             text-align: center;
@@ -43,12 +43,12 @@
         }
 
         .form-control:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            border-color: #87CEEB;
+            box-shadow: 0 0 0 0.2rem rgba(135, 206, 235, 0.25);
         }
 
         .btn-login {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #87CEEB 0%, #4682B4 100%);
             border: none;
             padding: 0.75rem;
             font-weight: 600;
@@ -57,7 +57,7 @@
 
         .btn-login:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 5px 15px rgba(135, 206, 235, 0.4);
         }
 
         .input-group-text {
@@ -80,7 +80,7 @@
             </div>
             
             <div class="login-body">
-                <h4 class="text-center mb-4">Login Admin</h4>
+                <h4 class="text-center mb-4">Login</h4>
                 
                 @if(session('error'))
                     <div class="alert alert-danger alert-dismissible fade show" role="alert">
