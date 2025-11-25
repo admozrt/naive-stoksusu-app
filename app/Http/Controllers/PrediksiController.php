@@ -30,6 +30,7 @@ class PrediksiController extends Controller
     public function predict(Request $request)
     {
         $request->validate([
+            'merk' => 'nullable|string|max:100',
             'stok' => 'required|integer',
             'permintaan' => 'required|integer',
             'penjualan' => 'required|integer',
@@ -81,7 +82,7 @@ class PrediksiController extends Controller
             
             // Simpan data stok terlebih dahulu
             $dataStok = DataStok::create([
-                'minggu' => DataStok::max('minggu') + 1,
+                'merk' => $request->merk ?? 'Prediksi-' . date('YmdHis'),
                 'stok' => $stok,
                 'permintaan' => $permintaan,
                 'penjualan' => $penjualan,

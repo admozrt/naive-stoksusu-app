@@ -23,6 +23,7 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/{id}', [DataStokController::class, 'update'])->name('update');
         Route::delete('/{id}', [DataStokController::class, 'destroy'])->name('destroy');
         Route::post('/training', [DataStokController::class, 'training'])->name('training');
+        Route::get('/export-pdf', [DataStokController::class, 'exportPdf'])->name('export-pdf');
     });
     
     // Prediksi Routes

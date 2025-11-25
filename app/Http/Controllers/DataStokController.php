@@ -8,6 +8,7 @@ use App\Models\DataLikelihood;
 use App\Models\DataProbabilitas;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class DataStokController extends Controller
 {
@@ -25,7 +26,7 @@ class DataStokController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'minggu' => 'required|integer',
+            'merk' => 'required|string|max:100',
             'stok' => 'required|integer',
             'permintaan' => 'required|integer',
             'penjualan' => 'required|integer',
@@ -49,7 +50,7 @@ class DataStokController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'minggu' => 'required|integer',
+            'merk' => 'required|string|max:100',
             'stok' => 'required|integer',
             'permintaan' => 'required|integer',
             'penjualan' => 'required|integer',
@@ -214,8 +215,43 @@ class DataStokController extends Controller
     private function gaussianProbability($x, $mean, $stdDev)
     {
         if ($stdDev == 0) $stdDev = 1; // Avoid division by zero
-        
+
         $exponent = exp(-pow($x - $mean, 2) / (2 * pow($stdDev, 2)));
         return (1 / (sqrt(2 * pi()) * $stdDev)) * $exponent;
+    }
+
+    public function exportPdf()
+    {
+        $dataStok = DataStok::orderBy('id_stok', 'asc')->get();
+
+        // Hitung statistik per kategori
+        $kategori = ['Banyak', 'Sedikit', 'Sedang'];
+        $statistik = [];
+
+        foreach ($kategori as $kat) {
+            $dataByKategori = DataStok::where('kategori_stok', $kat)->get();
+            $count = $dataByKategori->count();
+
+            if ($count > 0) {
+                $statistik[$kat] = [
+                    'count' => $count,
+                    'prior_probability' => $count / $dataStok->count(),
+                    'mean_stok' => round($dataByKategori->avg('stok'), 2),
+                    'mean_permintaan' => round($dataByKategori->avg('permintaan'), 2),
+                    'mean_penjualan' => round($dataByKategori->avg('penjualan'), 2),
+                    'std_stok' => round($this->calculateStdDev($dataByKategori->pluck('stok')->toArray(), $dataByKategori->avg('stok')), 2),
+                    'std_permintaan' => round($this->calculateStdDev($dataByKategori->pluck('permintaan')->toArray(), $dataByKategori->avg('permintaan')), 2),
+                    'std_penjualan' => round($this->calculateStdDev($dataByKategori->pluck('penjualan')->toArray(), $dataByKategori->avg('penjualan')), 2),
+                ];
+            }
+        }
+
+        $pdf = Pdf::loadView('admin.data-stok.pdf', [
+            'dataStok' => $dataStok,
+            'statistik' => $statistik,
+            'totalData' => $dataStok->count(),
+        ]);
+
+        return $pdf->download('laporan-data-stok-' . date('Y-m-d') . '.pdf');
     }
 }

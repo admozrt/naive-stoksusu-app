@@ -11,7 +11,7 @@ class DataStok extends Model
     public $incrementing = true;
 
     protected $fillable = [
-        'minggu',
+        'merk',
         'stok',
         'permintaan',
         'penjualan',

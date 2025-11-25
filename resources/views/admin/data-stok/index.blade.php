@@ -14,6 +14,9 @@
     <div class="card-header d-flex justify-content-between align-items-center">
         <h6 class="m-0 font-weight-bold text-primary">Daftar Data Stok</h6>
         <div>
+            <a href="{{ route('data-stok.export-pdf') }}" class="btn btn-danger btn-sm" target="_blank">
+                <i class="fas fa-file-pdf"></i> Cetak PDF
+            </a>
             <button class="btn btn-success btn-sm" id="btnTraining">
                 <i class="fas fa-cogs"></i> Training Model
             </button>
@@ -28,7 +31,7 @@
                 <thead>
                     <tr>
                         <th width="50">No</th>
-                        <th>Minggu</th>
+                        <th>Merk</th>
                         <th>Stok</th>
                         <th>Permintaan</th>
                         <th>Penjualan</th>
@@ -40,7 +43,7 @@
                     @forelse($dataStok as $index => $data)
                     <tr>
                         <td>{{ $index + 1 }}</td>
-                        <td>{{ $data->minggu }}</td>
+                        <td>{{ $data->merk }}</td>
                         <td>{{ $data->stok }}</td>
                         <td>{{ $data->permintaan }}</td>
                         <td>{{ $data->penjualan }}</td>
@@ -54,9 +57,9 @@
                             @endif
                         </td>
                         <td>
-                            <button class="btn btn-sm btn-warning btn-edit" 
+                            <button class="btn btn-sm btn-warning btn-edit"
                                     data-id="{{ $data->id_stok }}"
-                                    data-minggu="{{ $data->minggu }}"
+                                    data-merk="{{ $data->merk }}"
                                     data-stok="{{ $data->stok }}"
                                     data-permintaan="{{ $data->permintaan }}"
                                     data-penjualan="{{ $data->penjualan }}"
@@ -90,8 +93,8 @@
             <form id="formTambah">
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="minggu" class="form-label">Minggu</label>
-                        <input type="number" class="form-control" id="minggu" name="minggu" required>
+                        <label for="merk" class="form-label">Merk</label>
+                        <input type="text" class="form-control" id="merk" name="merk" required maxlength="100" placeholder="Contoh: Indomilk">
                     </div>
                     <div class="mb-3">
                         <label for="stok" class="form-label">Stok</label>
@@ -136,8 +139,8 @@
                 <input type="hidden" id="edit_id">
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="edit_minggu" class="form-label">Minggu</label>
-                        <input type="number" class="form-control" id="edit_minggu" name="minggu" required>
+                        <label for="edit_merk" class="form-label">Merk</label>
+                        <input type="text" class="form-control" id="edit_merk" name="merk" required maxlength="100" placeholder="Contoh: Indomilk">
                     </div>
                     <div class="mb-3">
                         <label for="edit_stok" class="form-label">Stok</label>
@@ -226,14 +229,14 @@ $(document).ready(function() {
     // Edit Data
     $('.btn-edit').on('click', function() {
         const id = $(this).data('id');
-        const minggu = $(this).data('minggu');
+        const merk = $(this).data('merk');
         const stok = $(this).data('stok');
         const permintaan = $(this).data('permintaan');
         const penjualan = $(this).data('penjualan');
         const kategori = $(this).data('kategori');
 
         $('#edit_id').val(id);
-        $('#edit_minggu').val(minggu);
+        $('#edit_merk').val(merk);
         $('#edit_stok').val(stok);
         $('#edit_permintaan').val(permintaan);
         $('#edit_penjualan').val(penjualan);
