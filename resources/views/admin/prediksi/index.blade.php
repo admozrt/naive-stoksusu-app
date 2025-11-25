@@ -17,19 +17,25 @@
     <div class="card-body">
         <form id="formPrediksi">
             <div class="row">
-                <div class="col-md-4">
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="pred_merk" class="form-label">Merk</label>
+                        <input type="text" class="form-control" id="pred_merk" name="merk" placeholder="Contoh: Indomilk" maxlength="100">
+                    </div>
+                </div>
+                <div class="col-md-3">
                     <div class="mb-3">
                         <label for="pred_stok" class="form-label">Stok</label>
                         <input type="number" class="form-control" id="pred_stok" name="stok" placeholder="Masukkan jumlah stok" required>
                     </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <div class="mb-3">
                         <label for="pred_permintaan" class="form-label">Permintaan</label>
                         <input type="number" class="form-control" id="pred_permintaan" name="permintaan" placeholder="Masukkan permintaan" required>
                     </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <div class="mb-3">
                         <label for="pred_penjualan" class="form-label">Penjualan</label>
                         <input type="number" class="form-control" id="pred_penjualan" name="penjualan" placeholder="Masukkan penjualan" required>
@@ -78,7 +84,7 @@
                     <tr>
                         <th width="50">No</th>
                         <th>ID Stok</th>
-                        <th>Minggu</th>
+                        <th>Merk</th>
                         <th>Stok</th>
                         <th>Permintaan</th>
                         <th>Penjualan</th>
@@ -92,7 +98,7 @@
                     <tr>
                         <td>{{ $index + 1 }}</td>
                         <td>{{ $p->id_stok }}</td>
-                        <td>{{ $p->dataStok->minggu }}</td>
+                        <td>{{ $p->dataStok->merk }}</td>
                         <td>{{ $p->dataStok->stok }}</td>
                         <td>{{ $p->dataStok->permintaan }}</td>
                         <td>{{ $p->dataStok->penjualan }}</td>
