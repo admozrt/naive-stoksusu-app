@@ -28,7 +28,7 @@ class DatabaseSeeder extends Seeder
         // Create 10 random DataStok entries without using factory
         for ($i = 0; $i < 15; $i++) {
             DataStok::create([
-                'minggu' => rand(1, 20),
+                'merk' => rand(1, 20),
                 'stok' => rand(10, 200),
                 'permintaan' => rand(10, 200),
                 'penjualan' => rand(10, 200),

@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('data_likelihood', function (Blueprint $table) {
-            $table->integer('id_likelihood', false, true)->length(12)->primary();
+            $table->integer('id_likelihood', true, true)->length(12)->primary();
             $table->integer('id_stok', false, true)->length(12);
             $table->string('kategori', 20);
             $table->float('stok_li', 15, 2);
