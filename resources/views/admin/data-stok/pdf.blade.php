@@ -194,9 +194,9 @@
             <tr>
                 <td>{{ $index + 1 }}</td>
                 <td>{{ $data->merk }}</td>
-                <td>{{ $data->stok }}</td>
-                <td>{{ $data->permintaan }}</td>
-                <td>{{ $data->penjualan }}</td>
+                <td>{{ str_replace('.', ',', $data->stok) }}</td>
+                <td>{{ str_replace('.', ',', $data->permintaan) }}</td>
+                <td>{{ str_replace('.', ',', $data->penjualan) }}</td>
                 <td>
                     @if($data->kategori_stok == 'Banyak')
                         <span class="badge badge-success">{{ $data->kategori_stok }}</span>
@@ -239,18 +239,18 @@
             <tbody>
                 <tr>
                     <td><strong>Stok</strong></td>
-                    <td>{{ $stat['mean_stok'] }}</td>
-                    <td>{{ $stat['std_stok'] }}</td>
+                    <td>{{ str_replace('.', ',', $stat['mean_stok']) }}</td>
+                    <td>{{ str_replace('.', ',', $stat['std_stok']) }}</td>
                 </tr>
                 <tr>
                     <td><strong>Permintaan</strong></td>
-                    <td>{{ $stat['mean_permintaan'] }}</td>
-                    <td>{{ $stat['std_permintaan'] }}</td>
+                    <td>{{ str_replace('.', ',', $stat['mean_permintaan']) }}</td>
+                    <td>{{ str_replace('.', ',', $stat['std_permintaan']) }}</td>
                 </tr>
                 <tr>
                     <td><strong>Penjualan</strong></td>
-                    <td>{{ $stat['mean_penjualan'] }}</td>
-                    <td>{{ $stat['std_penjualan'] }}</td>
+                    <td>{{ str_replace('.', ',', $stat['mean_penjualan']) }}</td>
+                    <td>{{ str_replace('.', ',', $stat['std_penjualan']) }}</td>
                 </tr>
             </tbody>
         </table>

@@ -27,14 +27,20 @@ class DataStokController extends Controller
     {
         $request->validate([
             'merk' => 'required|string|max:100',
-            'stok' => 'required|integer',
-            'permintaan' => 'required|integer',
-            'penjualan' => 'required|integer',
+            'stok' => 'required|numeric',
+            'permintaan' => 'required|numeric',
+            'penjualan' => 'required|numeric',
             'kategori_stok' => 'required|in:Banyak,Sedikit,Sedang',
         ]);
 
         try {
-            DataStok::create($request->all());
+            // Konversi koma ke titik untuk desimal
+            $data = $request->all();
+            $data['stok'] = $this->convertToDecimal($request->stok);
+            $data['permintaan'] = $this->convertToDecimal($request->permintaan);
+            $data['penjualan'] = $this->convertToDecimal($request->penjualan);
+
+            DataStok::create($data);
             return response()->json([
                 'success' => true,
                 'message' => 'Data stok berhasil ditambahkan!'
@@ -51,16 +57,22 @@ class DataStokController extends Controller
     {
         $request->validate([
             'merk' => 'required|string|max:100',
-            'stok' => 'required|integer',
-            'permintaan' => 'required|integer',
-            'penjualan' => 'required|integer',
+            'stok' => 'required|numeric',
+            'permintaan' => 'required|numeric',
+            'penjualan' => 'required|numeric',
             'kategori_stok' => 'required|in:Banyak,Sedikit,Sedang',
         ]);
 
         try {
+            // Konversi koma ke titik untuk desimal
+            $data = $request->all();
+            $data['stok'] = $this->convertToDecimal($request->stok);
+            $data['permintaan'] = $this->convertToDecimal($request->permintaan);
+            $data['penjualan'] = $this->convertToDecimal($request->penjualan);
+
             $dataStok = DataStok::findOrFail($id);
-            $dataStok->update($request->all());
-            
+            $dataStok->update($data);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Data stok berhasil diupdate!'
@@ -253,5 +265,23 @@ class DataStokController extends Controller
         ]);
 
         return $pdf->download('laporan-data-stok-' . date('Y-m-d') . '.pdf');
+    }
+
+    /**
+     * Konversi format angka dengan koma menjadi titik untuk desimal
+     * Mendukung angka negatif
+     */
+    private function convertToDecimal($value)
+    {
+        // Jika sudah berupa angka, return langsung
+        if (is_numeric($value)) {
+            return $value;
+        }
+
+        // Hapus spasi dan ubah koma menjadi titik
+        $value = str_replace(' ', '', $value);
+        $value = str_replace(',', '.', $value);
+
+        return floatval($value);
     }
 }
