@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('data_probabilitas', function (Blueprint $table) {
-            $table->integer('id_probabilitas', true, true)->length(12)->primary();
+            $table->increments('id_probabilitas')->primary();
             $table->integer('id_stok', false, true)->length(12);
             $table->string('kategori', 20);
             $table->float('probability', 20, 2);

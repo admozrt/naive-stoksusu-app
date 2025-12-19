@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('data_stok', function (Blueprint $table) {
-            $table->integer('id_stok', true, true)->length(12)->primary();
+            $table->increments('id_stok')->primary();
             $table->string('merk', 100);
             $table->integer('stok', false, true)->length(12);
             $table->integer('permintaan', false, true)->length(10);
