@@ -44,9 +44,9 @@
                     <tr>
                         <td>{{ $index + 1 }}</td>
                         <td>{{ $data->merk }}</td>
-                        <td>{{ $data->stok }}</td>
-                        <td>{{ $data->permintaan }}</td>
-                        <td>{{ $data->penjualan }}</td>
+                        <td>{{ str_replace('.', ',', $data->stok) }}</td>
+                        <td>{{ str_replace('.', ',', $data->permintaan) }}</td>
+                        <td>{{ str_replace('.', ',', $data->penjualan) }}</td>
                         <td>
                             @if($data->kategori_stok == 'Banyak')
                                 <span class="badge bg-success">{{ $data->kategori_stok }}</span>
@@ -98,15 +98,18 @@
                     </div>
                     <div class="mb-3">
                         <label for="stok" class="form-label">Stok</label>
-                        <input type="number" class="form-control" id="stok" name="stok" required>
+                        <input type="text" class="form-control" id="stok" name="stok" required placeholder="Contoh: 50,6 atau -10,5">
+                        <small class="text-muted">Gunakan koma untuk desimal. Angka negatif diperbolehkan.</small>
                     </div>
                     <div class="mb-3">
                         <label for="permintaan" class="form-label">Permintaan</label>
-                        <input type="number" class="form-control" id="permintaan" name="permintaan" required>
+                        <input type="text" class="form-control" id="permintaan" name="permintaan" required placeholder="Contoh: 100,75 atau -5">
+                        <small class="text-muted">Gunakan koma untuk desimal. Angka negatif diperbolehkan.</small>
                     </div>
                     <div class="mb-3">
                         <label for="penjualan" class="form-label">Penjualan</label>
-                        <input type="number" class="form-control" id="penjualan" name="penjualan" required>
+                        <input type="text" class="form-control" id="penjualan" name="penjualan" required placeholder="Contoh: 75,25 atau -3,5">
+                        <small class="text-muted">Gunakan koma untuk desimal. Angka negatif diperbolehkan.</small>
                     </div>
                     <div class="mb-3">
                         <label for="kategori_stok" class="form-label">Kategori Stok</label>
@@ -144,15 +147,18 @@
                     </div>
                     <div class="mb-3">
                         <label for="edit_stok" class="form-label">Stok</label>
-                        <input type="number" class="form-control" id="edit_stok" name="stok" required>
+                        <input type="text" class="form-control" id="edit_stok" name="stok" required placeholder="Contoh: 50,6 atau -10,5">
+                        <small class="text-muted">Gunakan koma untuk desimal. Angka negatif diperbolehkan.</small>
                     </div>
                     <div class="mb-3">
                         <label for="edit_permintaan" class="form-label">Permintaan</label>
-                        <input type="number" class="form-control" id="edit_permintaan" name="permintaan" required>
+                        <input type="text" class="form-control" id="edit_permintaan" name="permintaan" required placeholder="Contoh: 100,75 atau -5">
+                        <small class="text-muted">Gunakan koma untuk desimal. Angka negatif diperbolehkan.</small>
                     </div>
                     <div class="mb-3">
                         <label for="edit_penjualan" class="form-label">Penjualan</label>
-                        <input type="number" class="form-control" id="edit_penjualan" name="penjualan" required>
+                        <input type="text" class="form-control" id="edit_penjualan" name="penjualan" required placeholder="Contoh: 75,25 atau -3,5">
+                        <small class="text-muted">Gunakan koma untuk desimal. Angka negatif diperbolehkan.</small>
                     </div>
                     <div class="mb-3">
                         <label for="edit_kategori_stok" class="form-label">Kategori Stok</label>
@@ -182,6 +188,34 @@ $(document).ready(function() {
         headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         }
+    });
+
+    // Validasi input angka dengan koma dan negatif
+    function validateNumericInput(input) {
+        // Hanya izinkan angka, koma, minus, dan titik
+        input.value = input.value.replace(/[^0-9,\-\.]/g, '');
+
+        // Pastikan minus hanya di awal
+        if (input.value.indexOf('-') > 0) {
+            input.value = input.value.replace(/-/g, '');
+        }
+
+        // Pastikan hanya satu koma atau titik
+        const commaCount = (input.value.match(/,/g) || []).length;
+        const dotCount = (input.value.match(/\./g) || []).length;
+
+        if (commaCount > 1) {
+            input.value = input.value.replace(/,([^,]*)$/, '$1');
+        }
+
+        if (dotCount > 1) {
+            input.value = input.value.replace(/\.([^\.]*)$/, '$1');
+        }
+    }
+
+    // Terapkan validasi pada input stok, permintaan, penjualan
+    $('#stok, #permintaan, #penjualan, #edit_stok, #edit_permintaan, #edit_penjualan').on('input', function() {
+        validateNumericInput(this);
     });
 
     // Tambah Data
@@ -237,9 +271,10 @@ $(document).ready(function() {
 
         $('#edit_id').val(id);
         $('#edit_merk').val(merk);
-        $('#edit_stok').val(stok);
-        $('#edit_permintaan').val(permintaan);
-        $('#edit_penjualan').val(penjualan);
+        // Format nilai dengan koma untuk desimal
+        $('#edit_stok').val(String(stok).replace('.', ','));
+        $('#edit_permintaan').val(String(permintaan).replace('.', ','));
+        $('#edit_penjualan').val(String(penjualan).replace('.', ','));
         $('#edit_kategori_stok').val(kategori);
 
         $('#modalEdit').modal('show');

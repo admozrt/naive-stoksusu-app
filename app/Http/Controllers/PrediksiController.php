@@ -31,9 +31,9 @@ class PrediksiController extends Controller
     {
         $request->validate([
             'merk' => 'nullable|string|max:100',
-            'stok' => 'required|integer',
-            'permintaan' => 'required|integer',
-            'penjualan' => 'required|integer',
+            'stok' => 'required|numeric',
+            'permintaan' => 'required|numeric',
+            'penjualan' => 'required|numeric',
         ]);
 
         try {
@@ -46,9 +46,10 @@ class PrediksiController extends Controller
                 ], 400);
             }
 
-            $stok = $request->stok;
-            $permintaan = $request->permintaan;
-            $penjualan = $request->penjualan;
+            // Konversi koma ke titik untuk desimal
+            $stok = $this->convertToDecimal($request->stok);
+            $permintaan = $this->convertToDecimal($request->permintaan);
+            $penjualan = $this->convertToDecimal($request->penjualan);
 
             $kategori = ['Banyak', 'Sedikit', 'Sedang'];
             $probabilities = [];
@@ -127,7 +128,7 @@ class PrediksiController extends Controller
         try {
             $prediksi = DataPrediksi::findOrFail($id);
             $prediksi->delete();
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Data prediksi berhasil dihapus!'
@@ -138,5 +139,23 @@ class PrediksiController extends Controller
                 'message' => 'Gagal menghapus data prediksi!'
             ], 500);
         }
+    }
+
+    /**
+     * Konversi format angka dengan koma menjadi titik untuk desimal
+     * Mendukung angka negatif
+     */
+    private function convertToDecimal($value)
+    {
+        // Jika sudah berupa angka, return langsung
+        if (is_numeric($value)) {
+            return $value;
+        }
+
+        // Hapus spasi dan ubah koma menjadi titik
+        $value = str_replace(' ', '', $value);
+        $value = str_replace(',', '.', $value);
+
+        return floatval($value);
     }
 }
