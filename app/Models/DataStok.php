@@ -16,7 +16,22 @@ class DataStok extends Model
         'permintaan',
         'penjualan',
         'kategori_stok',
+        'is_training',
     ];
+
+    protected $casts = [
+        'is_training' => 'boolean',
+    ];
+
+    public function scopeTraining($query)
+    {
+        return $query->where('is_training', true);
+    }
+
+    public function scopePrediction($query)
+    {
+        return $query->where('is_training', false);
+    }
 
     public function prediksi()
     {

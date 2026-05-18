@@ -15,11 +15,11 @@ class DashboardController extends Controller
 
     public function index()
     {
-        $totalData = DataStok::count();
+        $totalData = DataStok::training()->count();
         $totalPrediksi = DataPrediksi::count();
-        $kategoriBanyak = DataStok::where('kategori_stok', 'Banyak')->count();
-        $kategoriSedikit = DataStok::where('kategori_stok', 'Sedikit')->count();
-        $kategoriSedang = DataStok::where('kategori_stok', 'Sedang')->count();
+        $kategoriBanyak = DataStok::training()->where('kategori_stok', 'Banyak')->count();
+        $kategoriSedikit = DataStok::training()->where('kategori_stok', 'Sedikit')->count();
+        $kategoriSedang = DataStok::training()->where('kategori_stok', 'Sedang')->count();
 
         return view('admin.dashboard', compact(
             'totalData',

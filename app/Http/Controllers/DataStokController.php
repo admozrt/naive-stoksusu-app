@@ -19,7 +19,7 @@ class DataStokController extends Controller
 
     public function index()
     {
-        $dataStok = DataStok::orderBy('id_stok', 'desc')->get();
+        $dataStok = DataStok::training()->orderBy('id_stok', 'desc')->get();
         return view('admin.data-stok.index', compact('dataStok'));
     }
 
@@ -39,6 +39,7 @@ class DataStokController extends Controller
             $data['stok'] = $this->convertToDecimal($request->stok);
             $data['permintaan'] = $this->convertToDecimal($request->permintaan);
             $data['penjualan'] = $this->convertToDecimal($request->penjualan);
+            $data['is_training'] = true;
 
             DataStok::create($data);
             return response()->json([
@@ -105,103 +106,78 @@ class DataStokController extends Controller
 
     public function training()
     {
-        $dataStok = DataStok::all();
+        $dataStok = DataStok::training()->get();
         $totalData = $dataStok->count();
 
         if ($totalData == 0) {
             return response()->json([
                 'success' => false,
-                'message' => 'Tidak ada data untuk training!'
+                'message' => 'Tidak ada data training! Tambahkan data stok berlabel terlebih dahulu.'
             ], 400);
         }
 
-        // DB::beginTransaction();
+        $kategori = ['Banyak', 'Sedikit', 'Sedang'];
 
+        // Validasi: setiap kategori minimal punya 2 data agar std-dev (n-1) valid
+        $kekurangan = [];
+        foreach ($kategori as $kat) {
+            $count = $dataStok->where('kategori_stok', $kat)->count();
+            if ($count < 2) {
+                $kekurangan[] = "$kat ($count data)";
+            }
+        }
+        if (!empty($kekurangan)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Setiap kategori minimal harus punya 2 data training. Kekurangan: '
+                    . implode(', ', $kekurangan),
+            ], 400);
+        }
+
+        DB::beginTransaction();
         try {
-            // Hapus data likelihood dan probabilitas lama
-            DataLikelihood::query()->truncate();
-            DataProbabilitas::query()->truncate();
+            DataLikelihood::query()->delete();
+            DataProbabilitas::query()->delete();
 
-            // Kategori yang ada
-            $kategori = ['Banyak', 'Sedikit', 'Sedang'];
-
-            // Hitung prior probability untuk setiap kategori
-            $priorProbabilities = [];
             foreach ($kategori as $kat) {
-                $countKategori = DataStok::where('kategori_stok', $kat)->count();
-                $priorProbabilities[$kat] = $countKategori / $totalData;
-            }
-
-            // Simpan probabilitas prior
-            foreach ($dataStok as $data) {
-                foreach ($kategori as $kat) {
-                    DataProbabilitas::create([
-                        'id_stok' => $data->id_stok,
-                        'kategori' => $kat,
-                        'probability' => $priorProbabilities[$kat],
-                    ]);
-                }
-            }
-
-            // Hitung likelihood untuk setiap kategori
-            foreach ($kategori as $kat) {
-                $dataByKategori = DataStok::where('kategori_stok', $kat)->get();
+                $dataByKategori = $dataStok->where('kategori_stok', $kat);
                 $countKategori = $dataByKategori->count();
 
-                if ($countKategori > 0) {
-                    // Hitung mean untuk setiap atribut
-                    $meanStok = $dataByKategori->avg('stok');
-                    $meanPermintaan = $dataByKategori->avg('permintaan');
-                    $meanPenjualan = $dataByKategori->avg('penjualan');
+                // Prior: P(C) = jumlah data kategori C / total data training
+                DataProbabilitas::create([
+                    'kategori' => $kat,
+                    'probability' => $countKategori / $totalData,
+                ]);
 
-                    // Hitung standard deviation
-                    $stdStok = $this->calculateStdDev($dataByKategori->pluck('stok')->toArray(), $meanStok);
-                    $stdPermintaan = $this->calculateStdDev($dataByKategori->pluck('permintaan')->toArray(), $meanPermintaan);
-                    $stdPenjualan = $this->calculateStdDev($dataByKategori->pluck('penjualan')->toArray(), $meanPenjualan);
+                // Likelihood: mean & sample std-dev tiap atribut
+                $stoks = $dataByKategori->pluck('stok')->map('floatval')->toArray();
+                $permintaans = $dataByKategori->pluck('permintaan')->map('floatval')->toArray();
+                $penjualans = $dataByKategori->pluck('penjualan')->map('floatval')->toArray();
 
-                    // Simpan likelihood untuk semua data
-                    foreach ($dataStok as $data) {
-                        DataLikelihood::create([
-                            'id_stok' => $data->id_stok,
-                            'kategori' => $kat,
-                            'stok_li' => $meanStok,
-                            'permintaan_li' => $meanPermintaan,
-                            'penjualan_li' => $meanPenjualan,
-                            'stok_std' => $stdStok,
-                            'permintaan_std' => $stdPermintaan,
-                            'penjualan_std' => $stdPenjualan,
-                        ]);
-                    }
-                } else {
-                    // Jika tidak ada data untuk kategori tertentu, set nilai default
-                    foreach ($dataStok as $data) {
-                        DataLikelihood::create([
-                            'id_stok' => $data->id_stok,
-                            'kategori' => $kat,
-                            'stok_li' => 0,
-                            'permintaan_li' => 0,
-                            'penjualan_li' => 0,
-                            'stok_std' => 1,
-                            'permintaan_std' => 1,
-                            'penjualan_std' => 1,
-                        ]);
-                    }
-                }
+                $meanStok = array_sum($stoks) / $countKategori;
+                $meanPermintaan = array_sum($permintaans) / $countKategori;
+                $meanPenjualan = array_sum($penjualans) / $countKategori;
+
+                DataLikelihood::create([
+                    'kategori' => $kat,
+                    'stok_li' => $meanStok,
+                    'permintaan_li' => $meanPermintaan,
+                    'penjualan_li' => $meanPenjualan,
+                    'stok_std' => $this->calculateStdDev($stoks, $meanStok),
+                    'permintaan_std' => $this->calculateStdDev($permintaans, $meanPermintaan),
+                    'penjualan_std' => $this->calculateStdDev($penjualans, $meanPenjualan),
+                ]);
             }
 
-            // DB::commit();
+            DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Training model berhasil! Data likelihood dan probabilitas telah dihitung.'
+                'message' => "Training berhasil! $totalData data training diproses.",
             ]);
 
         } catch (\Exception $e) {
-            // // Hanya rollback jika transaction masih aktif
-            // if (DB::transactionLevel() > 0) {
-            //     DB::rollback();
-            // }
-            
+            DB::rollback();
             \Log::error('Training error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
@@ -234,14 +210,14 @@ class DataStokController extends Controller
 
     public function exportPdf()
     {
-        $dataStok = DataStok::orderBy('id_stok', 'asc')->get();
+        $dataStok = DataStok::training()->orderBy('id_stok', 'asc')->get();
 
         // Hitung statistik per kategori
         $kategori = ['Banyak', 'Sedikit', 'Sedang'];
         $statistik = [];
 
         foreach ($kategori as $kat) {
-            $dataByKategori = DataStok::where('kategori_stok', $kat)->get();
+            $dataByKategori = $dataStok->where('kategori_stok', $kat);
             $count = $dataByKategori->count();
 
             if ($count > 0) {

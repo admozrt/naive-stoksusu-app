@@ -89,13 +89,15 @@ class PrediksiController extends Controller
             // Simpan ke database
             DB::beginTransaction();
             
-            // Simpan data stok terlebih dahulu
+            // Simpan data stok terlebih dahulu (ditandai sebagai hasil prediksi
+            // agar tidak ikut diproses ulang saat training berikutnya)
             $dataStok = DataStok::create([
-                'merk' => $request->merk ?? 'Prediksi-' . date('YmdHis'),
+                'merk' => $request->merk ?: 'Prediksi-' . date('YmdHis'),
                 'stok' => $stok,
                 'permintaan' => $permintaan,
                 'penjualan' => $penjualan,
                 'kategori_stok' => $hasilPrediksi,
+                'is_training' => false,
             ]);
 
             // Simpan hasil prediksi
