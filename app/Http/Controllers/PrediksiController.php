@@ -62,15 +62,23 @@ class PrediksiController extends Controller
                 $prior = DataProbabilitas::where('kategori', $kat)->first();
                 
                 if ($likelihood && $prior) {
-                    // Hitung probability menggunakan Gaussian Naive Bayes (simplified)
-                    $probStok = $this->calculateProbability($stok, $likelihood->stok_li);
-                    $probPermintaan = $this->calculateProbability($permintaan, $likelihood->permintaan_li);
-                    $probPenjualan = $this->calculateProbability($penjualan, $likelihood->penjualan_li);
-                    
-                    // Hitung posterior probability
+                    // Gaussian Naive Bayes: P(x|C) = (1 / (sqrt(2π) * σ)) * exp(-((x-μ)² / (2σ²)))
+                    $probStok = $this->gaussianProbability($stok, $likelihood->stok_li, $likelihood->stok_std);
+                    $probPermintaan = $this->gaussianProbability($permintaan, $likelihood->permintaan_li, $likelihood->permintaan_std);
+                    $probPenjualan = $this->gaussianProbability($penjualan, $likelihood->penjualan_li, $likelihood->penjualan_std);
+
+                    // Posterior ∝ P(C) * P(stok|C) * P(permintaan|C) * P(penjualan|C)
                     $posterior = $prior->probability * $probStok * $probPermintaan * $probPenjualan;
-                    
+
                     $probabilities[$kat] = $posterior;
+                }
+            }
+
+            // Normalisasi agar total probabilitas = 1 (P(D) sebagai evidence)
+            $totalProb = array_sum($probabilities);
+            if ($totalProb > 0) {
+                foreach ($probabilities as $k => $v) {
+                    $probabilities[$k] = $v / $totalProb;
                 }
             }
 
@@ -81,13 +89,15 @@ class PrediksiController extends Controller
             // Simpan ke database
             DB::beginTransaction();
             
-            // Simpan data stok terlebih dahulu
+            // Simpan data stok terlebih dahulu (ditandai sebagai hasil prediksi
+            // agar tidak ikut diproses ulang saat training berikutnya)
             $dataStok = DataStok::create([
-                'merk' => $request->merk ?? 'Prediksi-' . date('YmdHis'),
+                'merk' => $request->merk ?: 'Prediksi-' . date('YmdHis'),
                 'stok' => $stok,
                 'permintaan' => $permintaan,
                 'penjualan' => $penjualan,
                 'kategori_stok' => $hasilPrediksi,
+                'is_training' => false,
             ]);
 
             // Simpan hasil prediksi
@@ -116,11 +126,15 @@ class PrediksiController extends Controller
         }
     }
 
-    private function calculateProbability($value, $mean, $stdDev = 10)
+    private function gaussianProbability($x, $mean, $stdDev)
     {
-        // Simplified probability calculation
-        $diff = abs($value - $mean);
-        return 1 / (1 + $diff / 100); // Simple probability based on difference
+        // Hindari pembagian dengan nol bila standard deviation = 0
+        if ($stdDev == 0) {
+            $stdDev = 1e-6;
+        }
+
+        $exponent = exp(-pow($x - $mean, 2) / (2 * pow($stdDev, 2)));
+        return (1 / (sqrt(2 * pi()) * $stdDev)) * $exponent;
     }
 
     public function destroy($id)
