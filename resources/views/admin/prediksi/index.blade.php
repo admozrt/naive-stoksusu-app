@@ -6,9 +6,64 @@
 <div class="row mb-4">
     <div class="col-12">
         <h1 class="h3 mb-0 text-gray-800">Prediksi Stok Susu</h1>
-        <p class="text-muted">Hasil prediksi menggunakan algoritma Naive Bayes</p>
+        <p class="text-muted">Hasil prediksi menggunakan algoritma Gaussian Naive Bayes</p>
     </div>
 </div>
+
+<!-- Ringkasan -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card primary h-100">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <div class="text-xs text-uppercase text-primary fw-bold mb-1">Total Prediksi</div>
+                    <div class="h4 mb-0 fw-bold">{{ $statistik['total'] }}</div>
+                </div>
+                <div class="text-primary"><i class="fas fa-chart-line fa-2x opacity-50"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card success h-100">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <div class="text-xs text-uppercase text-success fw-bold mb-1">Hasil Banyak</div>
+                    <div class="h4 mb-0 fw-bold">{{ $statistik['banyak'] }}</div>
+                </div>
+                <div class="text-success"><i class="fas fa-arrow-up fa-2x opacity-50"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card warning h-100">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <div class="text-xs text-uppercase text-warning fw-bold mb-1">Hasil Sedang</div>
+                    <div class="h4 mb-0 fw-bold">{{ $statistik['sedang'] }}</div>
+                </div>
+                <div class="text-warning"><i class="fas fa-equals fa-2x opacity-50"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card danger h-100">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <div class="text-xs text-uppercase text-danger fw-bold mb-1">Hasil Sedikit</div>
+                    <div class="h4 mb-0 fw-bold">{{ $statistik['sedikit'] }}</div>
+                </div>
+                <div class="text-danger"><i class="fas fa-arrow-down fa-2x opacity-50"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if(!$statistik['sudah_training'])
+<div class="alert alert-warning d-flex align-items-center" role="alert">
+    <i class="fas fa-exclamation-triangle me-2"></i>
+    <div>Model belum dilatih. Tambahkan data di menu <strong>Data Stok</strong>, lalu klik <em>Training Model</em> sebelum melakukan prediksi.</div>
+</div>
+@endif
 
 <div class="card mb-4">
     <div class="card-header">
@@ -52,21 +107,58 @@
         <!-- Hasil Prediksi -->
         <div id="hasilPrediksi" class="mt-4" style="display: none;">
             <hr>
-            <h5 class="mb-3">Hasil Prediksi:</h5>
+            <h5 class="mb-3"><i class="fas fa-check-circle text-success"></i> Hasil Prediksi</h5>
+
             <div class="alert alert-success" role="alert">
-                <h5 class="alert-heading"><i class="fas fa-check-circle"></i> Prediksi Berhasil!</h5>
-                <hr>
-                <p class="mb-0">
-                    Kategori Stok: <strong id="kategoriHasil" class="fs-4"></strong>
-                </p>
+                <div class="d-flex justify-content-between align-items-center flex-wrap">
+                    <div>
+                        Kategori prediksi:
+                        <strong id="kategoriHasil" class="fs-3 ms-2"></strong>
+                    </div>
+                    <div class="text-end">
+                        <small class="text-muted d-block">Confidence</small>
+                        <strong id="confidenceHasil" class="fs-5"></strong>
+                    </div>
+                </div>
             </div>
 
-            <div class="card">
-                <div class="card-header">
-                    <strong>Detail Probabilitas</strong>
+            <div class="row">
+                <div class="col-md-5 mb-3">
+                    <div class="card h-100">
+                        <div class="card-header"><strong>Distribusi Probabilitas Posterior</strong></div>
+                        <div class="card-body" id="distribusiPosterior"></div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div id="detailProbabilitas"></div>
+                <div class="col-md-7 mb-3">
+                    <div class="card h-100">
+                        <div class="card-header"><strong>Rincian Perhitungan Naive Bayes</strong></div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered mb-0 text-center align-middle" id="tabelDetail">
+                                    <thead>
+                                        <tr>
+                                            <th rowspan="2">Kategori</th>
+                                            <th rowspan="2">P(C)</th>
+                                            <th colspan="3">Likelihood P(xᵢ|C)</th>
+                                            <th rowspan="2">Posterior ∝</th>
+                                        </tr>
+                                        <tr>
+                                            <th>Stok</th><th>Permintaan</th><th>Penjualan</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <small class="text-muted">
+                                Rumus: <em>P(C|D) ∝ P(C) · P(stok|C) · P(permintaan|C) · P(penjualan|C)</em>
+                                — dengan likelihood pakai Gaussian PDF
+                                <em>P(x|C) = (1/(σ√2π)) · exp(−(x−μ)²/(2σ²))</em>.
+                                Posterior dinormalisasi terhadap total agar menjumlah 1.
+                            </small>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -199,19 +291,57 @@ $(document).ready(function() {
                     }
                     $('#kategoriHasil').attr('class', badgeClass + ' fs-4');
                     
-                    // Tampilkan detail probabilitas
-                    let probHtml = '<table class="table table-sm">';
-                    probHtml += '<tr><th>Kategori</th><th>Probabilitas</th></tr>';
-                    $.each(response.data.probabilities, function(kategori, prob) {
-                        probHtml += '<tr><td>' + kategori + '</td><td>' + prob.toFixed(6) + '</td></tr>';
+                    const probs = response.data.probabilities;
+                    const detail = response.data.detail || {};
+                    const winner = response.data.prediksi;
+
+                    // Confidence (probabilitas yang menang setelah normalisasi)
+                    const confidence = probs[winner] ?? 0;
+                    $('#confidenceHasil').text((confidence * 100).toFixed(2) + '%');
+
+                    // Distribusi posterior - progress bar tiap kategori
+                    const colorMap = { 'Banyak': 'bg-success', 'Sedang': 'bg-warning', 'Sedikit': 'bg-danger' };
+                    let distHtml = '';
+                    $.each(probs, function(kat, p) {
+                        const pct = (p * 100).toFixed(2);
+                        const color = colorMap[kat] || 'bg-primary';
+                        distHtml += '<div class="mb-2">'
+                            + '<div class="d-flex justify-content-between"><strong>' + kat + '</strong>'
+                            + '<span>' + pct + '%</span></div>'
+                            + '<div class="progress" style="height: 18px;">'
+                            + '<div class="progress-bar ' + color + '" role="progressbar" style="width:' + pct + '%"></div>'
+                            + '</div></div>';
                     });
-                    probHtml += '</table>';
-                    $('#detailProbabilitas').html(probHtml);
-                    
+                    $('#distribusiPosterior').html(distHtml);
+
+                    // Rincian perhitungan (prior, likelihood, posterior unnormalized)
+                    let rowsHtml = '';
+                    const fmt = (v) => {
+                        if (v === 0) return '0';
+                        const abs = Math.abs(v);
+                        if (abs !== 0 && (abs < 0.0001 || abs > 9999)) return v.toExponential(3);
+                        return v.toFixed(6);
+                    };
+                    $.each(detail, function(kat, d) {
+                        const highlight = (kat === winner) ? ' class="table-success fw-bold"' : '';
+                        rowsHtml += '<tr' + highlight + '>'
+                            + '<td>' + kat + '</td>'
+                            + '<td>' + d.prior.toFixed(4) + '</td>'
+                            + '<td title="x=' + d.stok.x + ', μ=' + d.stok.mean + ', σ=' + d.stok.std + '">'
+                                + fmt(d.stok.likelihood) + '</td>'
+                            + '<td title="x=' + d.permintaan.x + ', μ=' + d.permintaan.mean + ', σ=' + d.permintaan.std + '">'
+                                + fmt(d.permintaan.likelihood) + '</td>'
+                            + '<td title="x=' + d.penjualan.x + ', μ=' + d.penjualan.mean + ', σ=' + d.penjualan.std + '">'
+                                + fmt(d.penjualan.likelihood) + '</td>'
+                            + '<td>' + fmt(d.posterior_raw) + '</td>'
+                            + '</tr>';
+                    });
+                    $('#tabelDetail tbody').html(rowsHtml);
+
                     $('#hasilPrediksi').slideDown();
-                    
-                    // Reload after 2 seconds
-                    setTimeout(() => location.reload(), 2000);
+
+                    // Reload setelah 4 detik agar user sempat baca rincian
+                    setTimeout(() => location.reload(), 4000);
                 }
             },
             error: function(xhr) {

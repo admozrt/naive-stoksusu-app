@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DataStokController;
 use App\Http\Controllers\PrediksiController;
+use App\Http\Controllers\UserController;
 
 // Authentication Routes
 Route::get('/', [AuthController::class, 'showLogin'])->name('login');
@@ -32,5 +33,13 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/create', [PrediksiController::class, 'create'])->name('create');
         Route::post('/predict', [PrediksiController::class, 'predict'])->name('predict');
         Route::delete('/{id}', [PrediksiController::class, 'destroy'])->name('destroy');
+    });
+
+    // Manajemen Pengguna
+    Route::prefix('users')->name('users.')->group(function () {
+        Route::get('/', [UserController::class, 'index'])->name('index');
+        Route::post('/', [UserController::class, 'store'])->name('store');
+        Route::put('/{id}', [UserController::class, 'update'])->name('update');
+        Route::delete('/{id}', [UserController::class, 'destroy'])->name('destroy');
     });
 });

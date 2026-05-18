@@ -144,6 +144,9 @@
                 <a class="nav-link {{ request()->routeIs('prediksi.*') ? 'active' : '' }}" href="{{ route('prediksi.index') }}">
                     <i class="fas fa-chart-line"></i> Prediksi
                 </a>
+                <a class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}" href="{{ route('users.index') }}">
+                    <i class="fas fa-users-cog"></i> Pengguna
+                </a>
                 <hr class="my-3 bg-white opacity-25">
                 <form action="{{ route('logout') }}" method="POST">
                     @csrf
@@ -166,7 +169,7 @@
                     <div class="ms-auto d-flex align-items-center">
                         <span class="me-2">
                             <i class="fas fa-user-circle fa-lg"></i> 
-                            {{ Auth::user()->nama }}
+                            {{ Auth::user()->name ?? Auth::user()->username }}
                         </span>
                     </div>
                 </div>

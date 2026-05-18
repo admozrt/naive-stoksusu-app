@@ -20,7 +20,27 @@ class DataStokController extends Controller
     public function index()
     {
         $dataStok = DataStok::training()->orderBy('id_stok', 'desc')->get();
-        return view('admin.data-stok.index', compact('dataStok'));
+
+        $kategori = ['Banyak', 'Sedang', 'Sedikit'];
+        $totalData = $dataStok->count();
+        $statistik = [];
+        foreach ($kategori as $kat) {
+            $byKat = $dataStok->where('kategori_stok', $kat);
+            $count = $byKat->count();
+            $statistik[$kat] = [
+                'count' => $count,
+                'prior' => $totalData > 0 ? $count / $totalData : 0,
+                'mean_stok' => $count > 0 ? $byKat->avg('stok') : null,
+                'mean_permintaan' => $count > 0 ? $byKat->avg('permintaan') : null,
+                'mean_penjualan' => $count > 0 ? $byKat->avg('penjualan') : null,
+                'std_stok' => $count > 1 ? $this->calculateStdDev($byKat->pluck('stok')->map('floatval')->toArray(), $byKat->avg('stok')) : null,
+                'std_permintaan' => $count > 1 ? $this->calculateStdDev($byKat->pluck('permintaan')->map('floatval')->toArray(), $byKat->avg('permintaan')) : null,
+                'std_penjualan' => $count > 1 ? $this->calculateStdDev($byKat->pluck('penjualan')->map('floatval')->toArray(), $byKat->avg('penjualan')) : null,
+            ];
+        }
+        $sudahTraining = DataLikelihood::count() > 0;
+
+        return view('admin.data-stok.index', compact('dataStok', 'statistik', 'totalData', 'sudahTraining'));
     }
 
     public function store(Request $request)
