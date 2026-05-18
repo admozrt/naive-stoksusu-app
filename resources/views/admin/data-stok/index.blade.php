@@ -6,9 +6,123 @@
 <div class="row mb-4">
     <div class="col-12">
         <h1 class="h3 mb-0 text-gray-800">Data Stok Susu</h1>
-        <p class="text-muted">Kelola data stok susu untuk training model</p>
+        <p class="text-muted">Kelola data stok susu untuk training model Naive Bayes</p>
     </div>
 </div>
+
+<!-- Ringkasan -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card primary h-100">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <div class="text-xs text-uppercase text-primary fw-bold mb-1">Total Data Training</div>
+                    <div class="h4 mb-0 fw-bold">{{ $totalData }}</div>
+                </div>
+                <div class="text-primary"><i class="fas fa-database fa-2x opacity-50"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card success h-100">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <div class="text-xs text-uppercase text-success fw-bold mb-1">Kategori Banyak</div>
+                    <div class="h4 mb-0 fw-bold">{{ $statistik['Banyak']['count'] }}</div>
+                    <small class="text-muted">P = {{ number_format($statistik['Banyak']['prior'], 4) }}</small>
+                </div>
+                <div class="text-success"><i class="fas fa-arrow-up fa-2x opacity-50"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card warning h-100">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <div class="text-xs text-uppercase text-warning fw-bold mb-1">Kategori Sedang</div>
+                    <div class="h4 mb-0 fw-bold">{{ $statistik['Sedang']['count'] }}</div>
+                    <small class="text-muted">P = {{ number_format($statistik['Sedang']['prior'], 4) }}</small>
+                </div>
+                <div class="text-warning"><i class="fas fa-equals fa-2x opacity-50"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card danger h-100">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <div class="text-xs text-uppercase text-danger fw-bold mb-1">Kategori Sedikit</div>
+                    <div class="h4 mb-0 fw-bold">{{ $statistik['Sedikit']['count'] }}</div>
+                    <small class="text-muted">P = {{ number_format($statistik['Sedikit']['prior'], 4) }}</small>
+                </div>
+                <div class="text-danger"><i class="fas fa-arrow-down fa-2x opacity-50"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Status model -->
+<div class="alert {{ $sudahTraining ? 'alert-success' : 'alert-warning' }} d-flex align-items-center" role="alert">
+    <i class="fas {{ $sudahTraining ? 'fa-check-circle' : 'fa-exclamation-triangle' }} fa-lg me-3"></i>
+    <div>
+        @if($sudahTraining)
+            <strong>Model sudah dilatih.</strong> Parameter likelihood (mean &amp; standard deviation) tersimpan di database. Setiap kali data berubah, lakukan training ulang.
+        @else
+            <strong>Model belum dilatih.</strong> Tambah data dengan label kategori, lalu klik <em>Training Model</em>. Minimal 2 data per kategori.
+        @endif
+    </div>
+</div>
+
+<!-- Statistik per kategori (parameter Gaussian Naive Bayes) -->
+@if($totalData > 0)
+<div class="card mb-4">
+    <div class="card-header">
+        <h6 class="m-0 fw-bold text-primary"><i class="fas fa-chart-bar"></i> Parameter Gaussian per Kategori</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered text-center align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th rowspan="2">Kategori</th>
+                        <th rowspan="2">Jumlah</th>
+                        <th rowspan="2">Prior P(C)</th>
+                        <th colspan="2">Stok</th>
+                        <th colspan="2">Permintaan</th>
+                        <th colspan="2">Penjualan</th>
+                    </tr>
+                    <tr>
+                        <th>μ (mean)</th><th>σ (std)</th>
+                        <th>μ (mean)</th><th>σ (std)</th>
+                        <th>μ (mean)</th><th>σ (std)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach(['Banyak','Sedang','Sedikit'] as $kat)
+                    @php $s = $statistik[$kat]; @endphp
+                    <tr>
+                        <td>
+                            @if($kat=='Banyak')<span class="badge bg-success">{{ $kat }}</span>
+                            @elseif($kat=='Sedang')<span class="badge bg-warning">{{ $kat }}</span>
+                            @else<span class="badge bg-danger">{{ $kat }}</span>@endif
+                        </td>
+                        <td>{{ $s['count'] }}</td>
+                        <td>{{ number_format($s['prior'], 4) }}</td>
+                        <td>{{ $s['mean_stok'] !== null ? number_format($s['mean_stok'], 2) : '-' }}</td>
+                        <td>{{ $s['std_stok'] !== null ? number_format($s['std_stok'], 4) : '-' }}</td>
+                        <td>{{ $s['mean_permintaan'] !== null ? number_format($s['mean_permintaan'], 2) : '-' }}</td>
+                        <td>{{ $s['std_permintaan'] !== null ? number_format($s['std_permintaan'], 4) : '-' }}</td>
+                        <td>{{ $s['mean_penjualan'] !== null ? number_format($s['mean_penjualan'], 2) : '-' }}</td>
+                        <td>{{ $s['std_penjualan'] !== null ? number_format($s['std_penjualan'], 4) : '-' }}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+        <small class="text-muted d-block mt-2">Nilai di atas dihitung langsung dari data training di tabel ini, dan akan dipakai pada Gaussian PDF saat prediksi.</small>
+    </div>
+</div>
+@endif
 
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">

@@ -19,7 +19,16 @@ class PrediksiController extends Controller
     public function index()
     {
         $prediksi = DataPrediksi::with('dataStok')->orderBy('id_prediksi', 'desc')->get();
-        return view('admin.prediksi.index', compact('prediksi'));
+
+        $statistik = [
+            'total' => $prediksi->count(),
+            'banyak' => $prediksi->where('prediksi', 'Banyak')->count(),
+            'sedang' => $prediksi->where('prediksi', 'Sedang')->count(),
+            'sedikit' => $prediksi->where('prediksi', 'Sedikit')->count(),
+            'sudah_training' => DataLikelihood::count() > 0,
+        ];
+
+        return view('admin.prediksi.index', compact('prediksi', 'statistik'));
     }
 
     public function create()
@@ -53,14 +62,12 @@ class PrediksiController extends Controller
 
             $kategori = ['Banyak', 'Sedikit', 'Sedang'];
             $probabilities = [];
+            $detail = [];
 
             foreach ($kategori as $kat) {
-                // Ambil data likelihood untuk kategori ini
                 $likelihood = DataLikelihood::where('kategori', $kat)->first();
-                
-                // Ambil prior probability
                 $prior = DataProbabilitas::where('kategori', $kat)->first();
-                
+
                 if ($likelihood && $prior) {
                     // Gaussian Naive Bayes: P(x|C) = (1 / (sqrt(2π) * σ)) * exp(-((x-μ)² / (2σ²)))
                     $probStok = $this->gaussianProbability($stok, $likelihood->stok_li, $likelihood->stok_std);
@@ -71,6 +78,28 @@ class PrediksiController extends Controller
                     $posterior = $prior->probability * $probStok * $probPermintaan * $probPenjualan;
 
                     $probabilities[$kat] = $posterior;
+                    $detail[$kat] = [
+                        'prior' => (float) $prior->probability,
+                        'stok' => [
+                            'x' => $stok,
+                            'mean' => (float) $likelihood->stok_li,
+                            'std' => (float) $likelihood->stok_std,
+                            'likelihood' => $probStok,
+                        ],
+                        'permintaan' => [
+                            'x' => $permintaan,
+                            'mean' => (float) $likelihood->permintaan_li,
+                            'std' => (float) $likelihood->permintaan_std,
+                            'likelihood' => $probPermintaan,
+                        ],
+                        'penjualan' => [
+                            'x' => $penjualan,
+                            'mean' => (float) $likelihood->penjualan_li,
+                            'std' => (float) $likelihood->penjualan_std,
+                            'likelihood' => $probPenjualan,
+                        ],
+                        'posterior_raw' => $posterior,
+                    ];
                 }
             }
 
@@ -114,6 +143,12 @@ class PrediksiController extends Controller
                 'data' => [
                     'prediksi' => $hasilPrediksi,
                     'probabilities' => $probabilities,
+                    'detail' => $detail,
+                    'input' => [
+                        'stok' => $stok,
+                        'permintaan' => $permintaan,
+                        'penjualan' => $penjualan,
+                    ],
                 ]
             ]);
 
